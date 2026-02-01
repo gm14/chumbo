@@ -324,6 +324,9 @@ int main(int argc, char** argv)
     while (!telemetry.health_all_ok()) {
         std::cout << "Waiting for system to be ready\n";
         Telemetry::Health health = telemetry.health();
+
+        std::cout << "Health: " << health << '\n';
+        
         sleep_for(seconds(1));
     }
     std::cout << "System is ready\n";
