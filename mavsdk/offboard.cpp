@@ -321,12 +321,12 @@ int main(int argc, char** argv)
     auto offboard = Offboard{system.value()};
     auto telemetry = Telemetry{system.value()};
 
-    while (!telemetry.health_all_ok()) {
+    while (!telemetry.health().is_armable) {
         std::cout << "Waiting for system to be ready\n";
         Telemetry::Health health = telemetry.health();
 
         std::cout << "Health: " << health << '\n';
-        
+
         sleep_for(seconds(1));
     }
     std::cout << "System is ready\n";
