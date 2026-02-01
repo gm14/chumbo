@@ -1,0 +1,13 @@
+[Unit]
+Description=Mavlink Router
+Wants=network.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/radxa/workspace/start_mavlink_router.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Video Streamer
+Wants=network.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/radxa/workspace/stream_video.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+
