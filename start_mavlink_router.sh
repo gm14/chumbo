@@ -1,5 +1,5 @@
 #!/bin/bash
-CONF=/home/radxa/workspace/main.conf
+CONF=/home/radxa/chumbo/main.conf
 
 # Make sure UART exists before launching
 until [ -e /dev/ttyS2 ]; do

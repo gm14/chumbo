@@ -20,8 +20,10 @@ PC_IP=192.168.0.28
 
 gst-launch-1.0 -v v4l2src device=/dev/video-camera0 \
   ! queue \
-  ! mpph264enc bps=3000000 rc-mode=cbr gop=30 \
-  ! rtph264pay config-interval=-1 pt=96 mtu=1400 \
+  ! videoconvert \
+  ! x264enc tune=zerolatency speed-preset=ultrafast key-int-max=30 sliced-threads=false \
+  ! video/x-h264,profile=baseline \
+  ! rtph264pay config-interval=1 pt=96 mtu=1400 \
   ! udpsink host=192.168.0.28 port=8888 sync=false
 
 #gst-launch-1.0 -v v4l2src device=/dev/video-camera0 \
