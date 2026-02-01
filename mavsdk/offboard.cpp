@@ -179,7 +179,7 @@ int main(int argc, char** argv)
     }
 
     std::cout << "\nDescend\n";
-    setpoint.down_m_s = -0.5f;
+    setpoint.down_m_s = 0.5f;
     setpoint.yawspeed_deg_s = 0.0f;
     offboard.set_velocity_body(setpoint);
     
