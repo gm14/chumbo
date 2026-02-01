@@ -167,17 +167,26 @@ int main(int argc, char** argv)
 
     // std::cout << "Offboard started\n";
 
-    std::cout << "Climb\n";
+    std::cout << "\nClimb\n";
     Offboard::VelocityBodyYawspeed setpoint{};
     setpoint.down_m_s = -0.5f;
     setpoint.yawspeed_deg_s = 0.0f;
     offboard.set_velocity_body(setpoint);
 
-    std::cout << "Descend" << std::endl;
+    while (telemetry.altitude().altitude_relative_m < 1.0f) {
+        std::cout << "Altitude: " << telemetry.altitude().altitude_relative_m << " m\n";
+        sleep_for(milliseconds(500));
+    }
+
+    std::cout << "\nDescend\n";
     setpoint.down_m_s = -0.5f;
     setpoint.yawspeed_deg_s = 0.0f;
     offboard.set_velocity_body(setpoint);
-    sleep_for(seconds(4));
+    
+    while (telemetry.altitude().altitude_relative_m > 0.2f) {
+        std::cout << "Altitude: " << telemetry.altitude().altitude_relative_m << " m\n";
+        sleep_for(milliseconds(500));
+    }
 
 
     const auto disarm_result = action.disarm();
