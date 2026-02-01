@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/home/radxa/chumbo/start_mavlink_router.sh
+ExecStart=/home/radxa/chumbo/scripts/start_mavlink_router.sh
 Restart=on-failure
 RestartSec=5
 
