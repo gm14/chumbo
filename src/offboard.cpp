@@ -98,6 +98,7 @@ int main(int argc, char** argv)
 
     while (telemetry.altitude().altitude_relative_m < 1.0f) {
         sleep_for(milliseconds(100));
+        std::cout << " Altitude: " << telemetry.altitude().altitude_relative_m << " m\n";
         offboard.set_velocity_body(setpoint);
     }
 
@@ -108,6 +109,7 @@ int main(int argc, char** argv)
     
     while (telemetry.altitude().altitude_relative_m > 0.2f) {
         sleep_for(milliseconds(100));
+        std::cout << " Altitude: " << telemetry.altitude().altitude_relative_m << " m\n";
         offboard.set_velocity_body(setpoint);
     }
 
