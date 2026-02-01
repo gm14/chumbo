@@ -34,146 +34,6 @@ void usage(const std::string& bin_name)
 }
 
 //
-// Does Offboard control using NED co-ordinates.
-//
-// returns true if everything went well in Offboard control
-//
-bool offb_ctrl_ned(mavsdk::Offboard& offboard)
-{
-    std::cout << "Starting Offboard velocity control in NED coordinates\n";
-
-    // Send it once before starting offboard, otherwise it will be rejected.
-    const Offboard::VelocityNedYaw stay{};
-    offboard.set_velocity_ned(stay);
-
-    Offboard::Result offboard_result = offboard.start();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard start failed: " << offboard_result << '\n';
-        return false;
-    }
-
-    std::cout << "Offboard started\n";
-    std::cout << "Turn to face East\n";
-
-    Offboard::VelocityNedYaw turn_east{};
-    turn_east.yaw_deg = 90.0f;
-    offboard.set_velocity_ned(turn_east);
-    sleep_for(seconds(1)); // Let yaw settle.
-
-    {
-        const float step_size = 0.01f;
-        const float one_cycle = 2.0f * (float)M_PI;
-        const unsigned steps = 2 * unsigned(one_cycle / step_size);
-
-        std::cout << "Go North and back South\n";
-
-        for (unsigned i = 0; i < steps; ++i) {
-            float vx = 5.0f * sinf(i * step_size);
-            Offboard::VelocityNedYaw north_and_back_south{};
-            north_and_back_south.north_m_s = vx;
-            north_and_back_south.yaw_deg = 90.0f;
-            offboard.set_velocity_ned(north_and_back_south);
-            sleep_for(milliseconds(10));
-        }
-    }
-
-    std::cout << "Turn to face West\n";
-    Offboard::VelocityNedYaw turn_west{};
-    turn_west.yaw_deg = 270.0f;
-    offboard.set_velocity_ned(turn_west);
-    sleep_for(seconds(2));
-
-    std::cout << "Go up 2 m/s, turn to face South\n";
-    Offboard::VelocityNedYaw up_and_south{};
-    up_and_south.down_m_s = -2.0f;
-    up_and_south.yaw_deg = 180.0f;
-    offboard.set_velocity_ned(up_and_south);
-    sleep_for(seconds(4));
-
-    std::cout << "Go down 1 m/s, turn to face North\n";
-    Offboard::VelocityNedYaw down_and_north{};
-    up_and_south.down_m_s = 1.0f;
-    offboard.set_velocity_ned(down_and_north);
-    sleep_for(seconds(4));
-
-    offboard_result = offboard.stop();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard stop failed: " << offboard_result << '\n';
-        return false;
-    }
-    std::cout << "Offboard stopped\n";
-
-    return true;
-}
-
-//
-// Does Offboard control using Global (Latitude, Longitude, relative altitude) co-ordinates.
-//
-// returns true if everything went well in Offboard control
-//
-bool offb_ctrl_pos_global(mavsdk::Offboard& offboard, mavsdk::Telemetry& telemetry)
-{
-    std::cout << "Reading home position in Global coordinates\n";
-
-    const auto res_and_gps_origin = telemetry.get_gps_global_origin();
-    if (res_and_gps_origin.first != Telemetry::Result::Success) {
-        std::cerr << "Telemetry failed: " << res_and_gps_origin.first << '\n';
-    }
-    Telemetry::GpsGlobalOrigin origin = res_and_gps_origin.second;
-    std::cerr << "Origin (lat, lon, alt amsl):\n " << origin << '\n';
-
-    std::cout << "Starting Offboard position control in Global coordinates\n";
-
-    // Send it once before starting offboard, otherwise it will be rejected.
-    // this is a step north about 10m, using the default altitude type (altitude relative to home)
-    const Offboard::PositionGlobalYaw north{
-        origin.latitude_deg + 0.0001, origin.longitude_deg, 20.0f, 0.0f};
-    offboard.set_position_global(north);
-
-    Offboard::Result offboard_result = offboard.start();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard start failed: " << offboard_result << '\n';
-        return false;
-    }
-
-    std::cout << "Offboard started\n";
-    std::cout << "Going North at 20m relative altitude\n";
-    sleep_for(seconds(10));
-
-    // here we use an explicit altitude type (relative to home)
-    const Offboard::PositionGlobalYaw east{
-        origin.latitude_deg + 0.0001,
-        origin.longitude_deg + 0.0001,
-        15.0f,
-        90.0f,
-        Offboard::PositionGlobalYaw::AltitudeType::RelHome};
-    offboard.set_position_global(east);
-    std::cout << "Going East at 15m relative altitude\n";
-    sleep_for(seconds(10));
-
-    // here we use the above mean sea level altitude
-    const Offboard::PositionGlobalYaw home{
-        origin.latitude_deg,
-        origin.longitude_deg,
-        origin.altitude_m + 10.0f,
-        180.0f,
-        Offboard::PositionGlobalYaw::AltitudeType::Amsl};
-    offboard.set_position_global(home);
-    std::cout << "Going Home facing south at " << (origin.altitude_m + 10.0f)
-              << "m AMSL altitude\n";
-    sleep_for(seconds(10));
-
-    offboard_result = offboard.stop();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard stop failed: " << offboard_result << '\n';
-        return false;
-    }
-    std::cout << "Offboard stopped\n";
-
-    return true;
-}
-
-//
 // Does Offboard control using body co-ordinates.
 // Body coordinates really means world coordinates rotated by the yaw of the
 // vehicle, so if the vehicle pitches down, the forward axis does still point
@@ -245,56 +105,6 @@ bool offb_ctrl_body(mavsdk::Offboard& offboard)
     return true;
 }
 
-//
-// Does Offboard control using attitude commands.
-//
-// returns true if everything went well in Offboard control.
-//
-bool offb_ctrl_attitude(mavsdk::Offboard& offboard)
-{
-    std::cout << "Starting Offboard attitude control\n";
-
-    // Send it once before starting offboard, otherwise it will be rejected.
-    Offboard::Attitude roll{};
-    roll.roll_deg = 30.0f;
-    roll.thrust_value = 0.6f;
-    offboard.set_attitude(roll);
-
-    Offboard::Result offboard_result = offboard.start();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard start failed: " << offboard_result << '\n';
-        return false;
-    }
-    std::cout << "Offboard started\n";
-
-    std::cout << "Roll 30 degrees to the right\n";
-    offboard.set_attitude(roll);
-    sleep_for(seconds(2));
-
-    std::cout << "Stay horizontal\n";
-    roll.roll_deg = 0.0f;
-    offboard.set_attitude(roll);
-    sleep_for(seconds(1));
-
-    std::cout << "Roll 30 degrees to the left\n";
-    roll.roll_deg = -30.0f;
-    offboard.set_attitude(roll);
-    sleep_for(seconds(2));
-    std::cout << "Stay horizontal\n";
-    roll.roll_deg = 0.0f;
-    offboard.set_attitude(roll);
-    sleep_for(seconds(2));
-
-    offboard_result = offboard.stop();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard stop failed: " << offboard_result << '\n';
-        return false;
-    }
-    std::cout << "Offboard stopped\n";
-
-    return true;
-}
-
 int main(int argc, char** argv)
 {
     if (argc != 2) {
@@ -321,6 +131,18 @@ int main(int argc, char** argv)
     auto offboard = Offboard{system.value()};
     auto telemetry = Telemetry{system.value()};
 
+    std::cout << "Starting Offboard velocity control in body coordinates\n";
+
+    // Send it once before starting offboard, otherwise it will be rejected.
+    Offboard::VelocityBodyYawspeed stay{};
+    offboard.set_velocity_body(stay);
+
+    Offboard::Result offboard_result = offboard.start();
+    if (offboard_result != Offboard::Result::Success) {
+        std::cerr << "Offboard start failed: " << offboard_result << '\n';
+        return 1;
+    }
+
     while (!telemetry.health().is_armable) {
         std::cout << "Waiting for system to be ready\n";
         Telemetry::Health health = telemetry.health();
@@ -339,6 +161,16 @@ int main(int argc, char** argv)
     std::cout << "Armed\n";
 
     sleep_for(seconds(2));
+
+    // std::cout << "Offboard started\n";
+
+    // std::cout << "Turn clock-wise and climb\n";
+    // Offboard::VelocityBodyYawspeed setpoint{};
+    // setpoint.down_m_s = -0.5f;
+    // setpoint.yawspeed_deg_s = 0.0f;
+    // offboard.set_velocity_body(setpoint);
+    // sleep_for(seconds(5));
+
 
     const auto disarm_result = action.disarm();
     if (disarm_result != Action::Result::Success) {
