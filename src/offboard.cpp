@@ -40,7 +40,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    Mavsdk mavsdk{Mavsdk::Configuration{ComponentType::GroundStation}};
+    Mavsdk mavsdk{Mavsdk::Configuration{ComponentType::CompanionComputer}};
     ConnectionResult connection_result = mavsdk.add_any_connection(argv[1]);
 
     if (connection_result != ConnectionResult::Success) {
@@ -59,17 +59,8 @@ int main(int argc, char** argv)
     auto offboard = Offboard{system.value()};
     auto telemetry = Telemetry{system.value()};
 
-    std::cout << "Starting Offboard velocity control in body coordinates\n";
-
-    // Send it once before starting offboard, otherwise it will be rejected.
     Offboard::VelocityBodyYawspeed stay{};
     offboard.set_velocity_body(stay);
-
-    Offboard::Result offboard_result = offboard.start();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard start failed: " << offboard_result << '\n';
-        return 1;
-    }
 
     sleep_for(seconds(2));
 
@@ -89,7 +80,8 @@ int main(int argc, char** argv)
         std::cerr << "Arming failed: " << arm_result << '\n';
         return 1;
     }
-    std::cout << "Armed, starting offboard post-arm\n";
+    std::cout << "Armed, starting offboard\n";
+
     offboard.set_velocity_body(stay);
 
     Offboard::Result offboard_result_2 = offboard.start();
@@ -105,8 +97,8 @@ int main(int argc, char** argv)
     offboard.set_velocity_body(setpoint);
 
     while (telemetry.altitude().altitude_relative_m < 1.0f) {
-        std::cout << "Altitude: " << telemetry.altitude().altitude_relative_m << " m\n";
-        sleep_for(milliseconds(500));
+        sleep_for(milliseconds(100));
+        offboard.set_velocity_body(setpoint);
     }
 
     std::cout << "\nDescend\n";
@@ -115,10 +107,9 @@ int main(int argc, char** argv)
     offboard.set_velocity_body(setpoint);
     
     while (telemetry.altitude().altitude_relative_m > 0.2f) {
-        std::cout << "Altitude: " << telemetry.altitude().altitude_relative_m << " m\n";
-        sleep_for(milliseconds(500));
+        sleep_for(milliseconds(100));
+        offboard.set_velocity_body(setpoint);
     }
-
 
     const auto disarm_result = action.disarm();
     if (disarm_result != Action::Result::Success) {
