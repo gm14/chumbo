@@ -33,78 +33,6 @@ void usage(const std::string& bin_name)
               << "For example, to connect to the simulator use URL: udpin://0.0.0.0:14540\n";
 }
 
-//
-// Does Offboard control using body co-ordinates.
-// Body coordinates really means world coordinates rotated by the yaw of the
-// vehicle, so if the vehicle pitches down, the forward axis does still point
-// forward and not down into the ground.
-//
-// returns true if everything went well in Offboard control.
-//
-bool offb_ctrl_body(mavsdk::Offboard& offboard)
-{
-    std::cout << "Starting Offboard velocity control in body coordinates\n";
-
-    // Send it once before starting offboard, otherwise it will be rejected.
-    Offboard::VelocityBodyYawspeed stay{};
-    offboard.set_velocity_body(stay);
-
-    Offboard::Result offboard_result = offboard.start();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard start failed: " << offboard_result << '\n';
-        return false;
-    }
-    std::cout << "Offboard started\n";
-
-    std::cout << "Turn clock-wise and climb\n";
-    Offboard::VelocityBodyYawspeed cc_and_climb{};
-    cc_and_climb.down_m_s = -1.0f;
-    cc_and_climb.yawspeed_deg_s = 60.0f;
-    offboard.set_velocity_body(cc_and_climb);
-    sleep_for(seconds(5));
-
-    std::cout << "Turn back anti-clockwise\n";
-    Offboard::VelocityBodyYawspeed ccw{};
-    ccw.down_m_s = -1.0f;
-    ccw.yawspeed_deg_s = -60.0f;
-    offboard.set_velocity_body(ccw);
-    sleep_for(seconds(5));
-
-    std::cout << "Wait for a bit\n";
-    offboard.set_velocity_body(stay);
-    sleep_for(seconds(2));
-
-    std::cout << "Fly a circle\n";
-    Offboard::VelocityBodyYawspeed circle{};
-    circle.forward_m_s = 5.0f;
-    circle.yawspeed_deg_s = 30.0f;
-    offboard.set_velocity_body(circle);
-    sleep_for(seconds(15));
-
-    std::cout << "Wait for a bit\n";
-    offboard.set_velocity_body(stay);
-    sleep_for(seconds(5));
-
-    std::cout << "Fly a circle sideways\n";
-    circle.right_m_s = -5.0f;
-    circle.yawspeed_deg_s = 30.0f;
-    offboard.set_velocity_body(circle);
-    sleep_for(seconds(15));
-
-    std::cout << "Wait for a bit\n";
-    offboard.set_velocity_body(stay);
-    sleep_for(seconds(8));
-
-    offboard_result = offboard.stop();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard stop failed: " << offboard_result << '\n';
-        return false;
-    }
-    std::cout << "Offboard stopped\n";
-
-    return true;
-}
-
 int main(int argc, char** argv)
 {
     if (argc != 2) {
@@ -161,11 +89,14 @@ int main(int argc, char** argv)
         std::cerr << "Arming failed: " << arm_result << '\n';
         return 1;
     }
-    std::cout << "Armed\n";
+    std::cout << "Armed, starting offboard post-arm\n";
+    offboard.set_velocity_body(stay);
 
-    sleep_for(seconds(2));
-
-    // std::cout << "Offboard started\n";
+    Offboard::Result offboard_result = offboard.start();
+    if (offboard_result != Offboard::Result::Success) {
+        std::cerr << "Offboard start failed: " << offboard_result << '\n';
+        return 1;
+    }
 
     std::cout << "\nClimb\n";
     Offboard::VelocityBodyYawspeed setpoint{};
