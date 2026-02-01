@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(offboard)
 
 add_executable(offboard
-    offboard.cpp
+    src/offboard.cpp
 )
 
 find_package(MAVSDK REQUIRED)

@@ -92,9 +92,9 @@ int main(int argc, char** argv)
     std::cout << "Armed, starting offboard post-arm\n";
     offboard.set_velocity_body(stay);
 
-    Offboard::Result offboard_result = offboard.start();
-    if (offboard_result != Offboard::Result::Success) {
-        std::cerr << "Offboard start failed: " << offboard_result << '\n';
+    Offboard::Result offboard_result_2 = offboard.start();
+    if (offboard_result_2 != Offboard::Result::Success) {
+        std::cerr << "Offboard start failed: " << offboard_result_2 << '\n';
         return 1;
     }
 
