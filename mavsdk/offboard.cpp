@@ -143,6 +143,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    sleep_for(seconds(2));
+
     while (!telemetry.health().is_armable) {
         std::cout << "Waiting for system to be ready\n";
         Telemetry::Health health = telemetry.health();
@@ -151,7 +153,8 @@ int main(int argc, char** argv)
 
         sleep_for(seconds(1));
     }
-    std::cout << "System is ready\n";
+
+    std::cout << "Arming... \n";
 
     const auto arm_result = action.arm();
     if (arm_result != Action::Result::Success) {
@@ -164,12 +167,17 @@ int main(int argc, char** argv)
 
     // std::cout << "Offboard started\n";
 
-    // std::cout << "Turn clock-wise and climb\n";
-    // Offboard::VelocityBodyYawspeed setpoint{};
-    // setpoint.down_m_s = -0.5f;
-    // setpoint.yawspeed_deg_s = 0.0f;
-    // offboard.set_velocity_body(setpoint);
-    // sleep_for(seconds(5));
+    std::cout << "Climb\n";
+    Offboard::VelocityBodyYawspeed setpoint{};
+    setpoint.down_m_s = -0.5f;
+    setpoint.yawspeed_deg_s = 0.0f;
+    offboard.set_velocity_body(setpoint);
+
+    std::cout << "Descend" << std::endl;
+    setpoint.down_m_s = -0.5f;
+    setpoint.yawspeed_deg_s = 0.0f;
+    offboard.set_velocity_body(setpoint);
+    sleep_for(seconds(4));
 
 
     const auto disarm_result = action.disarm();
